@@ -1,0 +1,6 @@
+.env
+.venv
+data
+outputs
+logs
+primekg.egg-info
