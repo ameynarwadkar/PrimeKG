@@ -103,32 +103,32 @@ Original PrimeKG relationships:
 Derived relationships:
 
 1. (:Drug)-[:CANDIDATE_FOR {
-      source,
-      interpretation,
-      evidence_gene_count,
-      evidence_genes,
-      drug_gene_relations,
-      gene_disease_relations
+      source: String,
+      interpretation: String,
+      evidence_gene_count: Integer,
+      evidence_genes: List[String],
+      drug_gene_relations: List[String],
+      gene_disease_relations: List[String]
    }]->(:Disease)
 
 2. (:Disease)-[:INVOLVES_PATHWAY {
-      source,
-      evidence_gene_count,
-      evidence_genes,
-      disease_gene_relations,
-      gene_pathway_relations
+      source: String,
+      evidence_gene_count: Integer,
+      evidence_genes: List[String],
+      disease_gene_relations: List[String],
+      gene_pathway_relations: List[String]
    }]->(:Pathway)
 
 3. (:Disease)-[:HAS_PHENOTYPE_SIGNAL {
-      source,
-      evidence_count,
-      evidence_relations
+      source: String,
+      evidence_count: Integer,
+      evidence_relations: List[String]
    }]->(:Phenotype)
 
 4. (:Disease)-[:SHARES_GENE_WITH {
-      source,
-      shared_gene_count,
-      shared_genes
+      source: String,
+      shared_gene_count: Integer,
+      shared_genes: List[String]
    }]->(:Disease)
 
 Important query patterns:
@@ -167,6 +167,7 @@ Rules:
 - Always include LIMIT 20 unless the user asks for counts.
 - Use DISTINCT where duplicates are likely.
 - Use toLower(x.name) CONTAINS "keyword" for name matching.
+- NEVER use toString() on List/Array properties. To search inside a List[String], use the ANY() function: ANY(item IN x.list_property WHERE toLower(item) CONTAINS "keyword").
 - For candidate drug questions, prefer the derived CANDIDATE_FOR relationship.
 - For pathway questions, prefer INVOLVES_PATHWAY.
 - For phenotype/symptom questions, prefer HAS_PHENOTYPE_SIGNAL.
@@ -250,11 +251,46 @@ def print_rows(rows):
         print("\nNo results found.")
         return
 
-    print("\nResults:")
+    print("\nRaw Results:")
     for i, row in enumerate(rows, start=1):
         print(f"\n[{i}]")
         for key, value in row.items():
             print(f"{key}: {value}")
+
+
+def format_answer_with_llm(question: str, cypher: str, rows: list) -> str:
+    prompt = f"""
+You are a biomedical expert interpreting results from a knowledge graph query.
+The user asked: "{question}"
+The Cypher query generated was:
+{cypher}
+The raw JSON results returned by the graph database are (limited to first 5):
+{rows[:5]}
+
+Please format the response strictly following this structure:
+
+Question:
+[The original question]
+
+Answer:
+[A clear natural language summary of the findings based on the provided rows]
+
+Evidence path:
+[Show the graph path using arrows, e.g. Drug X --TARGETS--> Gene G --ASSOCIATED_WITH--> Disease Y. If multiple paths exist, summarize or list a few clear examples.]
+
+Rule used:
+[Explain the logical rule if a derived relationship or multi-hop path was used, e.g. Drug TARGETS Gene + Gene ASSOCIATED_WITH Disease -> Drug CANDIDATE_FOR Disease. If it's a simple lookup, just state the direct relation used.]
+"""
+
+    completion = client.chat.completions.create(
+        model=AZURE_OPENAI_DEPLOYMENT,
+        messages=[
+            {"role": "system", "content": "You output plain text strictly in the requested format."},
+            {"role": "user", "content": prompt},
+        ],
+        temperature=0,
+    )
+    return completion.choices[0].message.content.strip()
 
 
 def main():
@@ -277,7 +313,14 @@ def main():
             print(cypher)
 
             rows = run_cypher(cypher)
-            print_rows(rows)
+            
+            if not rows:
+                print("\nNo results found.")
+            else:
+                print("\n" + "="*50)
+                formatted_response = format_answer_with_llm(question, cypher, rows)
+                print(formatted_response)
+                print("="*50)
 
         except Exception as e:
             print("\nError:")

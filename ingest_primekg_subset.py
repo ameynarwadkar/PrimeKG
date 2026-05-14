@@ -11,7 +11,7 @@ NEO4J_URI = os.getenv("NEO4J_URI", "bolt://127.0.0.1:7687")
 NEO4J_USER = os.getenv("NEO4J_USER", "neo4j")
 NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD")
 NEO4J_DATABASE = os.getenv("NEO4J_DATABASE", "primekg")
-INPUT_PATH = "outputs/primekg_alzheimer_subset.csv"
+INPUT_PATH = "data/primekg_alzheimer_subset.csv"
 CHUNK_SIZE = 1000
 
 driver = GraphDatabase.driver(

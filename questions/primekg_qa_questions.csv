@@ -1,0 +1,31 @@
+id,question,type,requires_rule,requires_explanation
+1,Which genes are associated with Alzheimer's disease?,direct_lookup,false,false
+2,What are the common symptoms of Alzheimer's disease?,direct_lookup,false,false
+3,Which drugs are approved for treating Alzheimer's disease?,direct_lookup,false,false
+4,What pathways involve the APOE gene?,direct_lookup,false,false
+5,Which proteins are targeted by donepezil?,direct_lookup,false,false
+6,What are the phenotypes associated with Parkinson's disease?,direct_lookup,false,false
+7,What molecular functions are linked to the APP gene?,direct_lookup,false,false
+8,Which anatomy parts are affected by Alzheimer's disease?,direct_lookup,false,false
+9,Which drugs target genes associated with Alzheimer disease?,multi_hop,true,true
+10,Which diseases share genes with Alzheimer's disease?,multi_hop,false,true
+11,Which pathways are connected to Alzheimer disease?,multi_hop,true,true
+12,What drugs target proteins involved in the amyloid beta pathway?,multi_hop,false,false
+13,Are there drugs that target genes shared by both Alzheimer's disease and Parkinson's disease?,multi_hop,false,false
+14,Which phenotypes are linked to diseases that share genes with Alzheimer's disease?,multi_hop,false,false
+15,What biological processes are affected by drugs targeting the APOE gene?,multi_hop,false,false
+16,Which anatomy parts are associated with diseases that share phenotypes with Alzheimer's disease?,multi_hop,false,false
+17,Which drugs are candidates for a disease based on gene targets?,derived_rule,true,true
+18,What are the candidate repurposed drugs for Alzheimer's disease?,derived_rule,true,false
+19,Which genes indicate a drug might be effective for Alzheimer's disease?,derived_rule,true,false
+20,Are there any off-label candidate drugs for treating Parkinson's disease?,derived_rule,true,false
+21,What potential new indications exist for galantamine based on graph rules?,derived_rule,true,false
+22,Which diseases is the drug imatinib a candidate for?,derived_rule,true,false
+23,What evidence rules support the use of donepezil for Alzheimer's?,derived_rule,true,true
+24,Which novel therapeutic candidates exist for Parkinson's disease based on shared pathways?,derived_rule,true,false
+25,Why might a drug be relevant to a disease?,explanation,true,true
+26,What is the evidence connecting the drug galantamine to Alzheimer's disease?,explanation,true,true
+27,Explain the biological pathway connection between APOE and amyloid beta.,explanation,false,true
+28,What evidence paths support the candidate relationship between memantine and Alzheimer's disease?,explanation,true,true
+29,Show me the underlying gene associations that link Alzheimer's and Parkinson's disease.,explanation,false,true
+30,Why do donepezil and galantamine have similar side effect profiles?,explanation,false,true

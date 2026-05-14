@@ -1,0 +1,368 @@
+id,question,generated_cypher,execution_success,number_of_rows,used_derived_rule,has_evidence_path,error_message
+1,Which genes are associated with Alzheimer's disease?,"MATCH (d:Disease)-[r:SHARES_GENE_WITH]->(d2:Disease)
+WHERE toLower(d.name) CONTAINS ""alzheimer""
+WITH d, r, d2
+OPTIONAL MATCH (d:Disease)-[r2:SHARES_GENE_WITH]->(d3:Disease)
+WHERE toLower(d3.name) CONTAINS ""alzheimer""
+RETURN DISTINCT d2.name AS related_disease, r.shared_genes AS shared_genes, r.source AS source
+LIMIT 20",True,1,True,True,
+2,What are the common symptoms of Alzheimer's disease?,"MATCH (d:Disease)-[r:HAS_PHENOTYPE_SIGNAL]->(p:Phenotype)
+WHERE toLower(d.name) CONTAINS ""alzheimer""
+RETURN DISTINCT
+  p.name AS symptom,
+  p.primekg_id AS primekg_id,
+  r.evidence_count AS evidence_count,
+  r.source AS source
+ORDER BY evidence_count DESC
+LIMIT 20",True,20,True,True,
+3,Which drugs are approved for treating Alzheimer's disease?,"MATCH (d:Disease)
+WHERE toLower(d.name) CONTAINS ""alzheimer""
+OPTIONAL MATCH (drug:Drug)-[r:CANDIDATE_FOR]->(d)
+WHERE r.interpretation IS NOT NULL AND toLower(r.interpretation) CONTAINS ""approved""
+RETURN DISTINCT
+  drug.name AS drug_name,
+  drug.primekg_id AS drug_primekg_id,
+  d.name AS disease_name,
+  r.source AS evidence_source,
+  r.interpretation AS interpretation,
+  r.evidence_gene_count AS evidence_gene_count,
+  r.evidence_genes AS evidence_genes
+ORDER BY r.evidence_gene_count DESC, drug.name ASC
+LIMIT 20",True,6,True,True,
+4,What pathways involve the APOE gene?,"MATCH (g:GeneProtein)
+WHERE toLower(g.name) CONTAINS ""apoe""
+MATCH (d:Disease)-[r:INVOLVES_PATHWAY]->(p:Pathway)
+WHERE ANY(eg IN r.evidence_genes WHERE toLower(eg) CONTAINS ""apoe"")
+RETURN DISTINCT
+  p.name AS pathway_name,
+  p.primekg_id AS pathway_primekg_id,
+  p.type AS pathway_type,
+  r.source AS evidence_source,
+  r.evidence_gene_count AS evidence_gene_count,
+  r.gene_pathway_relations AS gene_pathway_relations
+LIMIT 20",True,0,True,True,
+5,Which proteins are targeted by donepezil?,"MATCH (drug:Drug)-[r:CANDIDATE_FOR]->(d:Disease)
+OPTIONAL MATCH (drug)-[r1]-(g:GeneProtein)
+WHERE toLower(drug.name) CONTAINS ""donepezil""
+RETURN DISTINCT g.name AS protein, g.primekg_id AS primekg_id, g.type AS type, r1.relation AS relation, r1.display_relation AS display_relation, r1.source AS source
+LIMIT 20",True,20,True,True,
+6,What are the phenotypes associated with Parkinson's disease?,"MATCH (d:Disease)-[r:HAS_PHENOTYPE_SIGNAL]->(p:Phenotype)
+WHERE toLower(d.name) CONTAINS ""parkinson""
+RETURN DISTINCT
+  d.name AS disease,
+  p.name AS phenotype,
+  p.type AS phenotype_type,
+  r.source AS evidence_source,
+  r.evidence_count AS evidence_count,
+  r.evidence_relations AS evidence_relations
+LIMIT 20",True,4,True,True,
+7,What molecular functions are linked to the APP gene?,"MATCH (g:GeneProtein)-[r]-(mf:MolecularFunction)
+WHERE toLower(g.name) CONTAINS ""app""
+RETURN DISTINCT mf.name AS molecular_function, mf.primekg_id AS primekg_id, type(r) AS relation_type
+LIMIT 20",True,0,False,False,
+8,Which anatomy parts are affected by Alzheimer's disease?,"MATCH (d:Disease)-[r:HAS_PHENOTYPE_SIGNAL]->(p:Phenotype)
+WHERE toLower(d.name) CONTAINS ""alzheimer""
+  AND toLower(p.name) CONTAINS ""anatom""
+RETURN DISTINCT p.name AS anatomy_part, p.primekg_id AS primekg_id, r.source AS source
+LIMIT 20",True,0,True,True,
+9,Which drugs target genes associated with Alzheimer disease?,"MATCH (d:Disease)
+WHERE toLower(d.name) CONTAINS ""alzheimer""
+MATCH (drug:Drug)-[r:CANDIDATE_FOR]->(d)
+RETURN DISTINCT
+  drug.name AS drug_name,
+  drug.primekg_id AS drug_primekg_id,
+  d.name AS disease_name,
+  r.source AS candidate_for_source,
+  r.evidence_gene_count AS evidence_gene_count,
+  r.evidence_genes AS evidence_genes,
+  r.drug_gene_relations AS drug_gene_relations,
+  r.gene_disease_relations AS gene_disease_relations
+LIMIT 20",True,20,True,True,
+10,Which diseases share genes with Alzheimer's disease?,"MATCH (d1:Disease)-[r:SHARES_GENE_WITH]->(d2:Disease)
+WHERE toLower(d1.name) CONTAINS ""alzheimer""
+RETURN DISTINCT
+  d2.name AS shared_disease,
+  d2.primekg_id AS shared_disease_primekg_id,
+  r.shared_gene_count AS shared_gene_count,
+  r.shared_genes AS shared_genes
+ORDER BY shared_gene_count DESC
+LIMIT 20",True,1,True,False,
+11,Which pathways are connected to Alzheimer disease?,"MATCH (d:Disease)-[r:INVOLVES_PATHWAY]->(p:Pathway)
+WHERE toLower(d.name) CONTAINS ""alzheimer""
+RETURN DISTINCT
+  d.name AS disease,
+  p.name AS pathway,
+  p.primekg_id AS pathway_primekg_id,
+  r.source AS evidence_source,
+  r.evidence_gene_count AS evidence_gene_count,
+  r.gene_pathway_relations AS gene_pathway_relations
+LIMIT 20",True,2,True,True,
+12,What drugs target proteins involved in the amyloid beta pathway?,"MATCH (d:Disease)-[r:INVOLVES_PATHWAY]->(p:Pathway)
+WHERE toLower(p.name) CONTAINS ""amyloid beta""
+WITH DISTINCT d, p
+MATCH (drug:Drug)-[c:CANDIDATE_FOR]->(d)
+OPTIONAL MATCH (drug)-[r1]-(g:GeneProtein)-[r2]-(d)
+RETURN DISTINCT
+  drug.primekg_id AS drug_primekg_id,
+  drug.name AS drug_name,
+  p.name AS pathway_name,
+  d.name AS disease_name,
+  c.source AS candidate_for_source,
+  c.evidence_gene_count AS evidence_gene_count,
+  c.evidence_genes AS evidence_genes,
+  c.drug_gene_relations AS drug_gene_relations,
+  c.gene_disease_relations AS gene_disease_relations,
+  c.interpretation AS interpretation
+LIMIT 20",True,0,True,True,
+13,Are there drugs that target genes shared by both Alzheimer's disease and Parkinson's disease?,"MATCH (d1:Disease)-[r:SHARES_GENE_WITH]->(d2:Disease)
+WHERE toLower(d1.name) CONTAINS ""alzheimer"" AND toLower(d2.name) CONTAINS ""parkinson""
+WITH d1, d2, r.shared_genes AS sharedGenes
+MATCH (drug:Drug)-[c:CANDIDATE_FOR]->(d1)
+WHERE ANY(g IN c.evidence_genes WHERE g IN sharedGenes)
+WITH DISTINCT drug, d1, d2
+MATCH (drug)-[c2:CANDIDATE_FOR]->(d2)
+WHERE ANY(g IN c2.evidence_genes WHERE g IN sharedGenes)
+RETURN DISTINCT
+  drug.name AS drug_name,
+  drug.primekg_id AS drug_primekg_id,
+  d1.name AS alzheimer_disease,
+  d2.name AS parkinson_disease,
+  c.evidence_gene_count AS alzheimer_evidence_gene_count,
+  c2.evidence_gene_count AS parkinson_evidence_gene_count,
+  c.evidence_genes AS alzheimer_evidence_genes,
+  c2.evidence_genes AS parkinson_evidence_genes
+LIMIT 20",False,0,True,True,"{neo4j_code: Neo.ClientError.Statement.SyntaxError} {message: Variable `sharedGenes` not defined (line 8, column 45 (offset: 390))
+""WHERE ANY(g IN c2.evidence_genes WHERE g IN sharedGenes)""
+                                             ^} {gql_status: 42001} {gql_status_description: error: syntax error or access rule violation - invalid syntax}"
+14,Which phenotypes are linked to diseases that share genes with Alzheimer's disease?,"MATCH (alz:Disease)
+WHERE toLower(alz.name) CONTAINS ""alzheimer""
+MATCH (other:Disease)-[r:SHARES_GENE_WITH]->(alz)
+MATCH (other)-[rp:HAS_PHENOTYPE_SIGNAL]->(ph:Phenotype)
+RETURN DISTINCT
+  ph.name AS phenotype,
+  ph.primekg_id AS phenotype_id,
+  other.name AS disease,
+  other.primekg_id AS disease_id,
+  rp.source AS phenotype_relation_source,
+  rp.evidence_count AS evidence_count,
+  rp.evidence_relations AS evidence_relations
+LIMIT 20",True,20,True,True,
+15,What biological processes are affected by drugs targeting the APOE gene?,"MATCH (d:Drug)-[r:CANDIDATE_FOR]->(dis:Disease)
+MATCH (d)-[r2]-(g:GeneProtein)
+WHERE toLower(g.name) CONTAINS ""apoe""
+MATCH (dis)-[r3:INVOLVES_PATHWAY]->(p:Pathway)
+MATCH (p)-[r4]-(bp:BiologicalProcess)
+RETURN DISTINCT
+  bp.name AS biological_process,
+  bp.primekg_id AS biological_process_primekg_id,
+  bp.source AS source
+LIMIT 20",True,0,True,True,
+16,Which anatomy parts are associated with diseases that share phenotypes with Alzheimer's disease?,"MATCH (ad:Disease)
+WHERE toLower(ad.name) CONTAINS ""alzheimer""
+MATCH (ad)-[:HAS_PHENOTYPE_SIGNAL]->(ph:Phenotype)
+
+MATCH (d2:Disease)-[:HAS_PHENOTYPE_SIGNAL]->(ph)
+WITH DISTINCT ad, d2, ph
+
+MATCH (d2)-[r:INVOLVES_PATHWAY]->(p:Pathway)
+OPTIONAL MATCH (d2)-[r2:INVOLVES_PATHWAY]->(p2:Pathway)
+WITH DISTINCT d2, ph
+
+MATCH (d2)-[rp:INVOLVES_PATHWAY]->(p3:Pathway)
+OPTIONAL MATCH (p3)-[]-(a:Anatomy)
+WITH DISTINCT a, d2, ph
+WHERE a IS NOT NULL
+RETURN DISTINCT a.name AS anatomy_part, a.primekg_id AS primekg_id, a.source AS source
+LIMIT 20",True,0,True,True,
+17,Which drugs are candidates for a disease based on gene targets?,"MATCH (d:Disease)
+MATCH (drug:Drug)-[r:CANDIDATE_FOR]->(d)
+RETURN DISTINCT
+  drug.name AS drug_name,
+  drug.primekg_id AS drug_primekg_id,
+  d.name AS disease_name,
+  d.primekg_id AS disease_primekg_id,
+  r.source AS evidence_source,
+  r.interpretation AS interpretation,
+  r.evidence_gene_count AS evidence_gene_count,
+  r.evidence_genes AS evidence_genes
+LIMIT 20",True,20,True,True,
+18,What are the candidate repurposed drugs for Alzheimer's disease?,"MATCH (drug:Drug)-[r:CANDIDATE_FOR]->(d:Disease)
+WHERE toLower(d.name) CONTAINS ""alzheimer""
+RETURN DISTINCT
+  drug.name AS drug_name,
+  drug.primekg_id AS drug_primekg_id,
+  d.name AS disease_name,
+  d.primekg_id AS disease_primekg_id,
+  r.source AS evidence_source,
+  r.interpretation AS interpretation,
+  r.evidence_gene_count AS evidence_gene_count,
+  r.evidence_genes AS evidence_genes,
+  r.drug_gene_relations AS drug_gene_relations,
+  r.gene_disease_relations AS gene_disease_relations
+ORDER BY r.evidence_gene_count DESC, drug.name ASC
+LIMIT 20",True,20,True,True,
+19,Which genes indicate a drug might be effective for Alzheimer's disease?,"MATCH (drug:Drug)-[r:CANDIDATE_FOR]->(d:Disease)
+WHERE toLower(d.name) CONTAINS ""alzheimer""
+WITH DISTINCT r.evidence_genes AS evidence_genes
+UNWIND evidence_genes AS gene
+RETURN DISTINCT gene AS gene
+LIMIT 20",True,20,True,True,
+20,Are there any off-label candidate drugs for treating Parkinson's disease?,"MATCH (drug:Drug)-[r:CANDIDATE_FOR]->(d:Disease)
+WHERE toLower(d.name) CONTAINS ""parkinson""
+RETURN DISTINCT
+  drug.name AS drug_name,
+  drug.primekg_id AS drug_primekg_id,
+  d.name AS disease_name,
+  d.primekg_id AS disease_primekg_id,
+  r.interpretation AS candidate_interpretation,
+  r.source AS evidence_source,
+  r.evidence_gene_count AS evidence_gene_count,
+  r.evidence_genes AS evidence_genes,
+  r.drug_gene_relations AS drug_gene_relations,
+  r.gene_disease_relations AS gene_disease_relations
+ORDER BY r.evidence_gene_count DESC, drug.name ASC
+LIMIT 20",True,0,True,True,
+21,What potential new indications exist for galantamine based on graph rules?,"MATCH (drug:Drug)
+WHERE toLower(drug.name) CONTAINS ""galantamine""
+MATCH (drug)-[r:CANDIDATE_FOR]->(d:Disease)
+RETURN
+  drug.name AS drug,
+  d.name AS disease,
+  d.type AS disease_type,
+  r.source AS evidence_source,
+  r.interpretation AS interpretation,
+  r.evidence_gene_count AS evidence_gene_count,
+  r.evidence_genes AS evidence_genes,
+  r.drug_gene_relations AS drug_gene_relations,
+  r.gene_disease_relations AS gene_disease_relations
+ORDER BY r.evidence_gene_count DESC, d.name ASC
+LIMIT 20",True,2,True,True,
+22,Which diseases is the drug imatinib a candidate for?,"MATCH (drug:Drug)-[r:CANDIDATE_FOR]->(d:Disease)
+WHERE toLower(drug.name) CONTAINS ""imatinib""
+RETURN DISTINCT
+  drug.name AS drug,
+  d.name AS disease,
+  d.type AS disease_type,
+  r.source AS candidate_source,
+  r.interpretation AS interpretation,
+  r.evidence_gene_count AS evidence_gene_count,
+  r.evidence_genes AS evidence_genes
+LIMIT 20",True,2,True,True,
+23,What evidence rules support the use of donepezil for Alzheimer's?,"MATCH (drug:Drug)-[r:CANDIDATE_FOR]->(d:Disease)
+WHERE toLower(drug.name) CONTAINS ""donepezil""
+  AND toLower(d.name) CONTAINS ""alzheimer""
+RETURN
+  drug.name AS drug,
+  d.name AS disease,
+  r.source AS evidence_rule_source,
+  r.interpretation AS evidence_interpretation,
+  r.evidence_gene_count AS evidence_gene_count,
+  r.evidence_genes AS evidence_genes,
+  r.drug_gene_relations AS drug_gene_relations,
+  r.gene_disease_relations AS gene_disease_relations
+LIMIT 20",True,2,True,True,
+24,Which novel therapeutic candidates exist for Parkinson's disease based on shared pathways?,"MATCH (d:Disease)
+WHERE toLower(d.name) CONTAINS ""parkinson""
+MATCH (d)-[rp:INVOLVES_PATHWAY]->(p:Pathway)
+MATCH (drug:Drug)-[rc:CANDIDATE_FOR]->(d2:Disease)
+WHERE d2 <> d
+MATCH (d2)-[rp2:INVOLVES_PATHWAY]->(p)
+RETURN DISTINCT
+  drug.name AS drug_name,
+  drug.primekg_id AS drug_primekg_id,
+  d.name AS query_disease,
+  d2.name AS shared_pathway_disease,
+  p.name AS shared_pathway,
+  rc.source AS candidate_source,
+  rc.interpretation AS candidate_interpretation,
+  rc.evidence_gene_count AS candidate_evidence_gene_count,
+  rc.evidence_genes AS candidate_evidence_genes
+ORDER BY drug.name
+LIMIT 20",True,0,True,True,
+25,Why might a drug be relevant to a disease?,"MATCH (drug:Drug)-[r:CANDIDATE_FOR]->(d:Disease)
+RETURN
+  drug.name AS drug_name,
+  d.name AS disease_name,
+  r.source AS candidate_for_source,
+  r.interpretation AS candidate_for_interpretation,
+  r.evidence_gene_count AS evidence_gene_count,
+  r.evidence_genes AS evidence_genes,
+  r.drug_gene_relations AS drug_gene_relations,
+  r.gene_disease_relations AS gene_disease_relations
+LIMIT 20",True,20,True,True,
+26,What is the evidence connecting the drug galantamine to Alzheimer's disease?,"MATCH (drug:Drug)-[r:CANDIDATE_FOR]->(d:Disease)
+WHERE toLower(drug.name) CONTAINS ""galantamine""
+  AND toLower(d.name) CONTAINS ""alzheimer""
+RETURN
+  drug.name AS drug,
+  d.name AS disease,
+  r.source AS evidence_source,
+  r.interpretation AS interpretation,
+  r.evidence_gene_count AS evidence_gene_count,
+  r.evidence_genes AS evidence_genes,
+  r.drug_gene_relations AS drug_gene_relations,
+  r.gene_disease_relations AS gene_disease_relations,
+  r.relation AS relation,
+  r.display_relation AS display_relation
+LIMIT 20",True,2,True,True,
+27,Explain the biological pathway connection between APOE and amyloid beta.,"MATCH (d:Disease)
+WHERE toLower(d.name) CONTAINS ""amyloid beta""
+MATCH (d)-[r:INVOLVES_PATHWAY]->(p:Pathway)
+OPTIONAL MATCH (d)-[rg]-(g:GeneProtein)
+RETURN
+  d.name AS disease,
+  p.name AS pathway,
+  r.source AS connection_source,
+  r.evidence_gene_count AS evidence_gene_count,
+  r.evidence_genes AS evidence_genes,
+  r.disease_gene_relations AS disease_gene_relations,
+  r.gene_pathway_relations AS gene_pathway_relations,
+  r.relation AS relation_type,
+  r.display_relation AS display_relation
+LIMIT 20",True,0,True,True,
+28,What evidence paths support the candidate relationship between memantine and Alzheimer's disease?,"MATCH (drug:Drug)-[r:CANDIDATE_FOR]->(d:Disease)
+WHERE toLower(drug.name) CONTAINS ""memantine""
+  AND toLower(d.name) CONTAINS ""alzheimer""
+WITH drug, r, d
+MATCH (drug)-[r1]-(g:GeneProtein)-[r2]-(d)
+RETURN
+  drug.name AS drug,
+  d.name AS disease,
+  r.source AS candidate_source,
+  r.interpretation AS candidate_interpretation,
+  r.evidence_gene_count AS candidate_evidence_gene_count,
+  r.evidence_genes AS candidate_evidence_genes,
+  r1.relation AS drug_gene_relation,
+  r2.relation AS gene_disease_relation,
+  g.name AS evidence_gene,
+  r1.source AS drug_gene_source,
+  r2.source AS gene_disease_source
+LIMIT 20",True,0,True,True,
+29,Show me the underlying gene associations that link Alzheimer's and Parkinson's disease.,"MATCH (d1:Disease {name: ""Alzheimer's disease""})-[r1:SHARES_GENE_WITH]->(d2:Disease {name: ""Parkinson's disease""})
+WITH d1, d2, r1
+OPTIONAL MATCH (drug:Drug)-[r:CANDIDATE_FOR]->(d1)
+OPTIONAL MATCH (drug2:Drug)-[r:CANDIDATE_FOR]->(d2)
+OPTIONAL MATCH (g:GeneProtein)-[rel1]-(d1)
+OPTIONAL MATCH (g2:GeneProtein)-[rel2]-(d2)
+WITH d1, d2, r1, g, g2, rel1, rel2
+WHERE g IS NOT NULL AND g2 IS NOT NULL AND g.primekg_id = g2.primekg_id
+RETURN DISTINCT
+  d1.name AS disease_1,
+  d2.name AS disease_2,
+  g.name AS shared_gene,
+  r1.source AS shares_gene_source,
+  r1.shared_gene_count AS shared_gene_count,
+  r1.shared_genes AS shared_genes_list
+LIMIT 20",True,0,True,True,
+30,Why do donepezil and galantamine have similar side effect profiles?,"MATCH (d1:Disease)-[r1:SHARES_GENE_WITH]->(d2:Disease)
+WHERE toLower(d1.name) CONTAINS ""donepezil""
+  AND toLower(d2.name) CONTAINS ""galantamine""
+RETURN
+  d1.name AS disease_1,
+  d2.name AS disease_2,
+  r1.source AS source,
+  r1.shared_gene_count AS shared_gene_count,
+  r1.shared_genes AS shared_genes,
+  r1.relation AS relation,
+  r1.display_relation AS display_relation
+LIMIT 20",True,0,True,True,
